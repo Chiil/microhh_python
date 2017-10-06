@@ -9,27 +9,33 @@ def no_penetration(a, g):
     a.data[g.kend  ,:,:] = 0.
 
 def cyclic_boundaries(a, g):
-    a.data[:,:,g.istart-1] = a.data[:,:,g.iend-1]
-    a.data[:,:,g.iend    ] = a.data[:,:,g.istart]
-    a.data[:,g.jstart-1,:] = a.data[:,g.jend-1,:]
-    a.data[:,g.jend    ,:] = a.data[:,g.jstart,:]
+    a.data[:,:,0:g.istart] = a.data[:,:,g.iend-g.igc:g.iend]
+    a.data[:,0:g.jstart,:] = a.data[:,g.jend-g.jgc:g.jend,:]
+    a.data[:,:,g.iend:] = a.data[:,:,g.istart:g.istart+g.igc]
+    a.data[:,g.jend:,:] = a.data[:,g.jstart:g.jstart+g.jgc,:]
 
 def i2(a, b):
     return 0.5*(a + b)
 
 def advection_uvw(ut, vt, wt, u, v, w, g):
-    lc = np.s_[g.kstart:g.kend, g.jstart:g.jend, g.istart:g.iend]
-    lw = np.s_[g.kstart:g.kend, g.jstart:g.jend, g.istart-1:g.iend-1]
-    le = np.s_[g.kstart:g.kend, g.jstart:g.jend, g.istart+1:g.iend+1]
-    ls = np.s_[g.kstart:g.kend, g.jstart-1:g.jend-1, g.istart:g.iend]
-    ln = np.s_[g.kstart:g.kend, g.jstart+1:g.jend+1, g.istart:g.iend]
-    lb = np.s_[g.kstart-1:g.kend-1, g.jstart:g.jend, g.istart:g.iend]
-    lt = np.s_[g.kstart+1:g.kend+1, g.jstart:g.jend, g.istart:g.iend]
+    ut[g.i(0,0,0)] -= ( i2(u[g.i( 0, 0, 0)], u[g.i( 0, 0,+1)]) * i2(u[g.i( 0, 0, 0)], u[g.i( 0, 0,+1)]) \
+                      - i2(u[g.i( 0, 0,-1)], u[g.i( 0, 0, 0)]) * i2(u[g.i( 0, 0,-1)], u[g.i( 0, 0, 0)]) ) * g.dxi \
+                    + ( i2(v[g.i( 0,+1,-1)], v[g.i( 0,+1, 0)]) * i2(u[g.i( 0, 0, 0)], u[g.i( 0,+1, 0)]) \
+                      - i2(v[g.i( 0, 0,-1)], v[g.i( 0, 0, 0)]) * i2(u[g.i( 0,-1, 0)], u[g.i( 0, 0, 0)]) ) * g.dyi \
+                    + ( i2(w[g.i(+1, 0,-1)], w[g.i(+1, 0, 0)]) * i2(u[g.i( 0, 0, 0)], u[g.i(+1, 0, 0)]) \
+                      - i2(w[g.i( 0, 0,-1)], w[g.i( 0, 0, 0)]) * i2(u[g.i(-1, 0, 0)], u[g.i( 0, 0, 0)]) ) * g.dzi[g.k(0),np.newaxis,np.newaxis]
 
-    ut[lc] -= ( i2(u[lc], u[le])**2 \
-              - i2(u[lw], u[le])**2 ) / g.dx \
-            + ( i2(u[lc], u[ln]) * i2(u[lc], u[ln]) \
-              - i2(u[ls], u[lc]) * i2(u[ls], u[lc]) ) / g.dy \
-            + ( i2(u[lc], u[lt]) * i2(u[lc], u[lt]) \
-              - i2(u[lb], u[lc]) * i2(u[lb], u[lc]) ) / g.dy
+    vt[g.i(0,0,0)] -= ( i2(u[g.i( 0, 0, 0)], u[g.i( 0, 0,+1)]) * i2(v[g.i( 0, 0, 0)], v[g.i( 0, 0,+1)]) \
+                      - i2(u[g.i( 0, 0,-1)], u[g.i( 0, 0, 0)]) * i2(v[g.i( 0, 0,-1)], v[g.i( 0, 0, 0)]) ) * g.dxi \
+                    + ( i2(v[g.i( 0, 0, 0)], v[g.i( 0,+1, 0)]) * i2(v[g.i( 0, 0, 0)], v[g.i( 0,+1, 0)]) \
+                      - i2(v[g.i( 0,-1, 0)], v[g.i( 0, 0, 0)]) * i2(v[g.i( 0,-1, 0)], v[g.i( 0, 0, 0)]) ) * g.dyi \
+                    + ( i2(w[g.i(+1, 0,-1)], w[g.i(+1, 0, 0)]) * i2(v[g.i( 0, 0, 0)], v[g.i(+1, 0, 0)]) \
+                      - i2(w[g.i( 0, 0,-1)], w[g.i( 0, 0, 0)]) * i2(v[g.i(-1, 0, 0)], v[g.i( 0, 0, 0)]) ) * g.dzi[g.k(0),np.newaxis,np.newaxis]
+
+    wt[g.ih(0,0,0)] -= ( i2(u[g.ih( 0, 0, 0)], u[g.ih( 0, 0,+1)]) * i2(w[g.ih( 0, 0, 0)], w[g.ih( 0, 0,+1)]) \
+                       - i2(u[g.ih( 0, 0,-1)], u[g.ih( 0, 0, 0)]) * i2(w[g.ih( 0, 0,-1)], w[g.ih( 0, 0, 0)]) ) * g.dxi \
+                     + ( i2(v[g.ih( 0,+1,-1)], v[g.ih( 0,+1, 0)]) * i2(w[g.ih( 0, 0, 0)], w[g.ih( 0,+1, 0)]) \
+                       - i2(v[g.ih( 0, 0,-1)], v[g.ih( 0, 0, 0)]) * i2(w[g.ih( 0,-1, 0)], w[g.ih( 0, 0, 0)]) ) * g.dyi \
+                     + ( i2(w[g.ih( 0, 0, 0)], w[g.ih(+1, 0, 0)]) * i2(w[g.ih( 0, 0, 0)], w[g.ih(+1, 0, 0)]) \
+                       - i2(w[g.ih(-1, 0, 0)], w[g.ih( 0, 0, 0)]) * i2(w[g.ih(-1, 0, 0)], w[g.ih( 0, 0, 0)]) ) * g.dzhi[g.kh(0),np.newaxis,np.newaxis]
 

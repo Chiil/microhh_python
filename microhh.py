@@ -5,15 +5,24 @@ import grid
 import field
 import kernels
 
-itot = 8
-jtot = 6
-ktot = 4
+# Settings for simulation
+itot = 64
+jtot = 48
+ktot = 32
 
-x = np.arange(0, 2.*np.pi, 2*np.pi/itot)
-y = np.arange(0, np.pi, np.pi/jtot)
-z = np.arange(0, 2., 2./ktot)
+xsize = 2.*np.pi
+ysize = np.pi
+zsize = 2.
 
-g = grid.Grid(x, y, z, 0, 2.)
+z = np.zeros(ktot)
+alpha = 0.967
+for k in range(ktot):
+    eta  = -1. + 2.*((k+1)-0.5) / ktot
+    z[k] = zsize / (2.*alpha) * np.tanh(eta*0.5*(np.log(1.+alpha) - np.log(1.-alpha))) + 0.5*zsize
+# End of settings
+
+
+g = grid.Grid(itot, jtot, ktot, xsize, ysize, zsize, z)
 
 u = field.Field(g)
 v = field.Field(g)
@@ -28,16 +37,14 @@ u.randomize(1e-3)
 v.randomize(1e-3)
 w.randomize(1e-3)
 
-for i in range(100):
-    kernels.no_slip(u, g)
-    kernels.no_slip(v, g)
-    
-    kernels.no_penetration(w, g)
-    
-    kernels.cyclic_boundaries(u, g)
-    kernels.cyclic_boundaries(v, g)
-    kernels.cyclic_boundaries(w, g)
-    
-    kernels.advection_uvw(u_tend.data, v_tend.data, w_tend.data,
-                          u.data, v.data, w.data, g)
+kernels.no_slip(u, g)
+kernels.no_slip(v, g)
 
+kernels.no_penetration(w, g)
+
+kernels.cyclic_boundaries(u, g)
+kernels.cyclic_boundaries(v, g)
+kernels.cyclic_boundaries(w, g)
+
+kernels.advection_uvw(u_tend.data, v_tend.data, w_tend.data,
+                      u.data, v.data, w.data, g)
