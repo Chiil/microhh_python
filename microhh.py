@@ -19,8 +19,9 @@ alpha = 0.967
 for k in range(ktot):
     eta  = -1. + 2.*((k+1)-0.5) / ktot
     z[k] = zsize / (2.*alpha) * np.tanh(eta*0.5*(np.log(1.+alpha) - np.log(1.-alpha))) + 0.5*zsize
-# End of settings
 
+visc = 1.e-5
+# End of settings
 
 g = grid.Grid(itot, jtot, ktot, xsize, ysize, zsize, z)
 
@@ -46,5 +47,11 @@ kernels.cyclic_boundaries(u, g)
 kernels.cyclic_boundaries(v, g)
 kernels.cyclic_boundaries(w, g)
 
-kernels.advection_uvw(u_tend.data, v_tend.data, w_tend.data,
-                      u.data, v.data, w.data, g)
+kernels.advection_u(u_tend.data, u.data, v.data, w.data, g)
+kernels.advection_v(v_tend.data, u.data, v.data, w.data, g)
+kernels.advection_w(w_tend.data, u.data, v.data, w.data, g)
+
+kernels.diffusion  (u_tend.data, u.data, visc, g)
+kernels.diffusion  (v_tend.data, v.data, visc, g)
+kernels.diffusion_w(w_tend.data, w.data, visc, g)
+

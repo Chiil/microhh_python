@@ -9,7 +9,7 @@ class Grid:
 
         self.igc = 1
         self.jgc = 1
-        self.kgc = 1
+        self.kgc = 2
 
         self.itot = itot
         self.jtot = jtot
@@ -67,7 +67,7 @@ class Grid:
         self.dzhi[self.kstart-1] = self.dzhi[self.kstart+1];
 
         self.dz [self.kstart:self.kend] = self.zh[self.kstart+1:self.kend+1] - self.zh[self.kstart:self.kend];
-        self.dzi[self.kstart:self.kend] = 1./self.dz[1:self.kcells-1];
+        self.dzi[self.kstart:self.kend] = 1./self.dz[self.kstart:self.kend];
 
         self.dz [self.kstart-1] = self.dz [self.kstart];
         self.dzi[self.kstart-1] = self.dzi[self.kstart];
