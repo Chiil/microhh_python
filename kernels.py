@@ -58,10 +58,38 @@ def diffusion_w(at, a, visc, g):
     dxidxi = g.dxi**2
     dyidyi = g.dyi**2
     at[g.ih(0,0,0)] += visc * ( \
-                        + ( (a[g.ih( 0, 0,+1)] - a[g.ih( 0, 0, 0)]) \
-                          - (a[g.ih( 0, 0, 0)] - a[g.ih( 0, 0,-1)]) ) * dxidxi \
-                        + ( (a[g.ih( 0,+1, 0)] - a[g.ih( 0, 0, 0)]) \
-                          - (a[g.ih( 0, 0, 0)] - a[g.ih( 0,-1, 0)]) ) * dyidyi \
-                        + ( (a[g.ih(+1, 0, 0)] - a[g.ih( 0, 0, 0)]) * g.dzi[g.kh( 0),np.newaxis,np.newaxis] \
-                          - (a[g.ih( 0, 0, 0)] - a[g.ih(-1, 0, 0)]) * g.dzi[g.kh(-1),np.newaxis,np.newaxis] ) * g.dzhi[g.kh(0),np.newaxis,np.newaxis] )
+                     + ( (a[g.ih( 0, 0,+1)] - a[g.ih( 0, 0, 0)]) \
+                       - (a[g.ih( 0, 0, 0)] - a[g.ih( 0, 0,-1)]) ) * dxidxi \
+                     + ( (a[g.ih( 0,+1, 0)] - a[g.ih( 0, 0, 0)]) \
+                       - (a[g.ih( 0, 0, 0)] - a[g.ih( 0,-1, 0)]) ) * dyidyi \
+                     + ( (a[g.ih(+1, 0, 0)] - a[g.ih( 0, 0, 0)]) * g.dzi[g.kh( 0),np.newaxis,np.newaxis] \
+                       - (a[g.ih( 0, 0, 0)] - a[g.ih(-1, 0, 0)]) * g.dzi[g.kh(-1),np.newaxis,np.newaxis] ) * g.dzhi[g.kh(0),np.newaxis,np.newaxis] )
+
+#    // set the cyclic boundary conditions for the tendencies
+#    grid->boundary_cyclic(ut, East_west_edge  );
+#    grid->boundary_cyclic(vt, North_south_edge);
+#
+#    // write pressure as a 3d array without ghost cells
+#    for (int k=0; k<grid->kmax; k++)
+#        for (int j=0; j<grid->jmax; j++)
+##pragma ivdep
+#            for (int i=0; i<grid->imax; i++)
+#            {
+#                const int ijkp = i + j*jjp + k*kkp;
+#                const int ijk  = i+igc + (j+jgc)*jj + (k+kgc)*kk;
+#                p[ijkp] = rhoref[k+kgc] * ( (ut[ijk+ii] + u[ijk+ii] * dti) - (ut[ijk] + u[ijk] * dti) ) * dxi
+#                        + rhoref[k+kgc] * ( (vt[ijk+jj] + v[ijk+jj] * dti) - (vt[ijk] + v[ijk] * dti) ) * dyi
+#                        + ( rhorefh[k+kgc+1] * (wt[ijk+kk] + w[ijk+kk] * dti) 
+#                          - rhorefh[k+kgc  ] * (wt[ijk   ] + w[ijk   ] * dti) ) * dzi[k+kgc];
+#            }
+
+def pressure_input(p, u, v, w, u_tend, v_tend, w_tend, g):
+    cyclic_boundaries(u_tend, g)
+    cyclic_boundaries(v_tend, g)
+
+def pressure_solve():
+    return
+
+def pressure_tendency():
+    return
 
