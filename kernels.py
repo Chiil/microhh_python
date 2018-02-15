@@ -94,8 +94,25 @@ def pressure_solve(p, u, v, w, ut, vt, wt, g, dt):
     b[g.ktot-1,:,:] += c[g.ktot-1]
     b[g.ktot-1,0,0] -= 2.*c[g.ktot-1]
 
+    # TDMA solver.
+    work2d = b[0,:,:].copy()
+    tmp[0,:,:] /= work2d[:,:]
+    
+    work3d = np.empty(tmp.shape)
+
+    for k in range(1, g.ktot):
+        work3d[k,:,:] = c[k-1] / work2d[:,:]
+        work2d[:,:] = b[k,:,:] - a[k]*work3d[k,:,:]
+
+        tmp[k,:,:] -= a[k]*tmp[k-1,:,:]
+        tmp[k,:,:] /= work2d[:,:]
+
+    for k in range(g.ktot-2, 0, -1):
+        tmp[k,:,:] -= work3d[k+1,:,:]*tmp[k+1,:,:]
+
     tmp = np.fft.irfft2(tmp)
 
+    # Store output.
     p[g.i( 0, 0, 0)] = tmp[:,:,:]
 
     # Set a zero gradient at the wall.
@@ -111,5 +128,5 @@ def calc_divergence(u, v, w, g):
         + ( v[g.i( 0, 0, +1)] - v[g.i( 0, 0, 0)] ) * g.dyi \
         + ( w[g.i( 0, 0, +1)] - w[g.i( 0, 0, 0)] ) * g.dzi[g.k(0), None, None]
 
-    print(div.shape, div[10,10,10], div.sum())
+    print(abs(div).max(), div.sum())
 
