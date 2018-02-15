@@ -63,6 +63,12 @@ for n in range(1):
     dt = 0.001
     kernels.pressure_solve(p.data, u.data, v.data, w.data, u_tend.data, v_tend.data, w_tend.data, g, dt)
     kernels.pressure_tendency(u_tend.data, v_tend.data, w_tend.data, p.data, g)
+
+    u.data += dt*u_tend.data
+    v.data += dt*v_tend.data
+    w.data += dt*w_tend.data
+
+    kernels.calc_divergence(u.data, v.data, w.data, g)
     # End of right-hand side.
 
 print('Finished')

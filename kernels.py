@@ -75,6 +75,25 @@ def pressure_solve(p, u, v, w, ut, vt, wt, g, dt):
 
     tmp = np.fft.rfft2(tmp)
 
+    a = g.dz[g.k(0)] * g.dzhi[g.k( 0)]
+    c = g.dz[g.k(0)] * g.dzhi[g.k(+1)]
+
+    ifrac = np.arange(g.itot//2+1) / g.itot
+    jfrac = np.arange(g.jtot//2+1) / g.jtot
+
+    bmati = 2.*np.cos(2.*np.pi*ifrac-1.) * g.dxi**2;
+    bmatj = np.zeros(g.jtot)
+    bmatj[0:g.jtot//2+1] = 2.*np.cos(2.*np.pi*jfrac-1.) * g.dyi**2;
+    bmatj[g.jtot//2+1:] = bmatj[g.jtot//2-1:0:-1]
+
+    b = g.dz[g.k(0), None, None]**2 * (bmati[None, None, :]+bmatj[None, :, None]) - (a[:, None, None]+c[:, None, None])
+    tmp[:,:,:] *= g.dz[g.k(0), None, None]**2
+
+    # Boundary conditions.
+    b[0,:,:] += a[0]
+    b[g.ktot-1,:,:] += c[g.ktot-1]
+    b[g.ktot-1,0,0] -= 2.*c[g.ktot-1]
+
     tmp = np.fft.irfft2(tmp)
 
     p[g.i( 0, 0, 0)] = tmp[:,:,:]
@@ -86,4 +105,11 @@ def pressure_tendency(ut, vt, wt, p, g):
     ut[g.i ( 0, 0, 0)] -= (p[g.i ( 0, 0,+1)] - p[g.i ( 0, 0, 0)]) * g.dxi
     vt[g.i ( 0, 0, 0)] -= (p[g.i ( 0,+1, 0)] - p[g.i ( 0, 0, 0)]) * g.dyi
     wt[g.ih( 0, 0, 0)] -= (p[g.ih(+1, 0, 0)] - p[g.ih( 0, 0, 0)]) * g.dzhi[g.kh(0), None, None]
+
+def calc_divergence(u, v, w, g):
+    div = ( u[g.i( 0, 0, +1)] - u[g.i( 0, 0, 0)] ) * g.dxi \
+        + ( v[g.i( 0, 0, +1)] - v[g.i( 0, 0, 0)] ) * g.dyi \
+        + ( w[g.i( 0, 0, +1)] - w[g.i( 0, 0, 0)] ) * g.dzi[g.k(0), None, None]
+
+    print(div.shape, div[10,10,10], div.sum())
 
